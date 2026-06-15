@@ -144,20 +144,20 @@ async function handleConfirm(interaction, targetId) {
         const verifyRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(`vf:verifyme:${targetId}`)
-                .setLabel('Verify')
+                .setLabel('Verificar')
                 .setStyle(ButtonStyle.Success),
             new ButtonBuilder()
                 .setCustomId(`vf:tryagain:${targetId}`)
-                .setLabel('Try Again')
+                .setLabel('Intentar de nuevo')
                 .setStyle(ButtonStyle.Danger),
         );
 
         await interaction.message.edit({
             content:
-                `<@${targetId}> — To verify your identity, please rename one of your companies to:\n\n` +
+                `<@${targetId}> — Para verificar tu identidad, renombrá una de tus empresas a:\n\n` +
                 `**\`${code}\`**\n\n` +
-                `Once done, press **Verify** below. You can rename it back afterwards.\n` +
-                `-# You have 15 minutes to complete this step.`,
+                `Una vez hecho, presioná **Verificar** abajo. Podés volver a cambiarle el nombre después.\n` +
+                `-# Tenés 15 minutos para completar este paso.`,
             embeds: [],
             components: [verifyRow],
         });
@@ -245,11 +245,11 @@ async function handleModalRetry(interaction, targetId) {
 
     const condensed  = verificationFlow.buildCondensedEmbed(data, interaction.user);
     const confirmRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`vf:confirm:${targetId}`).setLabel("Yes, that's me").setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`vf:tryagain:${targetId}`).setLabel('Try Again').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`vf:confirm:${targetId}`).setLabel('Sí, soy yo').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`vf:tryagain:${targetId}`).setLabel('Intentar de nuevo').setStyle(ButtonStyle.Danger),
     );
 
-    await interaction.channel.send({ content: `<@${targetId}> — Is this your in-game account?`, embeds: [condensed], components: [confirmRow] });
+    await interaction.channel.send({ content: `<@${targetId}> — ¿Esta es tu cuenta en el juego?`, embeds: [condensed], components: [confirmRow] });
     await interaction.editReply('Profile updated.');
 }
 

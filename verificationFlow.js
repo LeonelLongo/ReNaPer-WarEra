@@ -132,7 +132,7 @@ function buildCondensedEmbed(data, discordUser) {
     const embed = new EmbedBuilder()
         .setTitle(`${countryFlag} ${profile.username}`)
         .setColor(0x95A5A6)
-        .setDescription('Is this you?')
+        .setDescription('¿Eres vos?')
         .addFields(
             { name: 'Level',   value: String(profile.leveling?.level ?? '?'), inline: true },
             { name: 'Country', value: `${countryFlag} ${country?.name ?? 'Unknown'}`, inline: true },
@@ -282,16 +282,16 @@ async function openTicket(guild, discordUser, lookupData) {
     const confirmRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`vf:confirm:${discordUser.id}`)
-            .setLabel("Yes, that's me")
+            .setLabel('Sí, soy yo')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId(`vf:tryagain:${discordUser.id}`)
-            .setLabel('Try Again')
+            .setLabel('Intentar de nuevo')
             .setStyle(ButtonStyle.Danger),
     );
 
     await channel.send({
-        content:    `<@${discordUser.id}> — Is this your in-game account?`,
+        content:    `<@${discordUser.id}> — ¿Esta es tu cuenta en el juego?`,
         embeds:     [condensed],
         components: [confirmRow],
     });
