@@ -1,0 +1,6 @@
+[2026-06-15T19:09:27.197Z] [INFO] [DEPLOY] Loaded command: manualverify
+[2026-06-15T19:09:27.202Z] [INFO] [DEPLOY] Loaded command: setverification
+[2026-06-15T19:09:27.204Z] [INFO] [DEPLOY] Loaded command: unverify
+[2026-06-15T19:09:27.206Z] [INFO] [DEPLOY] Loaded command: verify
+[2026-06-15T19:09:27.207Z] [INFO] [DEPLOY] Registering 4 slash command(s)...
+[2026-06-15T19:09:27.575Z] [INFO] [DEPLOY] Slash commands registered successfully.
