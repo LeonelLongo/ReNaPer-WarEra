@@ -112,14 +112,18 @@ async function ensurePortOfEntryEmbed() {
     if (!channel) { logger.warn('POE', `portOfEntry channel ${channelId} not in cache.`); return; }
 
     const embed = new EmbedBuilder()
-        .setTitle('Welcome to Argentina')
+        .setTitle('🇦🇷 Bienvenido a Argentina | Welcome to Argentina')
         .setColor(0x74ACDF)
         .setDescription(
+            'Para acceder al servidor debés identificarte.\n\n' +
+            '**Hacé clic en el botón de abajo para comenzar tu solicitud de ingreso.**\n\n' +
+            'Tené listo tu nombre de usuario, ID de jugador o enlace de perfil de WarEra.\n\n' +
+            '――――――――――――――――――――\n\n' +
             'To gain access to this server you must identify yourself.\n\n' +
             '**Click the button below to begin your immigration application.**\n\n' +
             'Have your WarEra username, player ID, or profile link ready.'
         )
-        .setFooter({ text: 'Immigration Services' })
+        .setFooter({ text: 'Servicios de Inmigración | Immigration Services' })
         .setTimestamp();
 
     const button = new ActionRowBuilder().addComponents(
