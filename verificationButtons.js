@@ -318,7 +318,7 @@ async function handleVerifyMe(interaction, targetId) {
     await interaction.message.edit({ content: 'Identity verified.', embeds: [], components: [] }).catch(() => {});
 
     await interaction.channel.send({
-        content:    `${ping}\nIdentity confirmed — new immigration application from <@${targetId}>`,
+        content:    `${ping}\nIdentidad confirmada — nueva solicitud de ingreso de <@${targetId}>`,
         embeds:     [fullEmbed],
         components: buttons,
     });
@@ -344,16 +344,11 @@ async function handleTicketButton(interaction, action, targetDiscordId) {
         const id = targetDiscordId;
         const allOptions = [
             new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`vf:approve:${id}`).setLabel('Approve Citizen').setStyle(ButtonStyle.Success),
-                new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomat').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Visitor Visa').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId(`vf:greencardholder:${id}`).setLabel('Green Card').setStyle(ButtonStyle.Secondary),
-            ),
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`vf:deportee:${id}`).setLabel('Deportee').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId(`vf:terrorist:${id}`).setLabel('Terrorist').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId(`vf:deny:${id}`).setLabel('Deny').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId(`vf:close:${id}`).setLabel('Close Ticket').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`vf:approve:${id}`).setLabel('Aprobar Ciudadano').setStyle(ButtonStyle.Success),
+                new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomático').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Visa de Visitante').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`vf:deny:${id}`).setLabel('Denegar').setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId(`vf:close:${id}`).setLabel('Cerrar Ticket').setStyle(ButtonStyle.Secondary),
             ),
         ];
         await interaction.message.edit({ components: allOptions }).catch(() => {});

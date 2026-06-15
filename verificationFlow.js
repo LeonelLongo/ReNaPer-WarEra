@@ -202,10 +202,10 @@ function updateEmbedApplicationStatus(embed, status) {
 function buildActionButtons(discordId, immigrationStatus) {
     const id = discordId;
 
-    const approveBtn = new ButtonBuilder().setCustomId(`vf:approve:${id}`).setLabel('Approve Citizen').setStyle(ButtonStyle.Success);
-    const denyBtn    = new ButtonBuilder().setCustomId(`vf:deny:${id}`).setLabel('Deny').setStyle(ButtonStyle.Danger);
-    const closeBtn   = new ButtonBuilder().setCustomId(`vf:close:${id}`).setLabel('Close Ticket').setStyle(ButtonStyle.Secondary);
-    const otherBtn   = new ButtonBuilder().setCustomId(`vf:other:${id}`).setLabel('Other').setStyle(ButtonStyle.Secondary);
+    const approveBtn = new ButtonBuilder().setCustomId(`vf:approve:${id}`).setLabel('Aprobar Ciudadano').setStyle(ButtonStyle.Success);
+    const denyBtn    = new ButtonBuilder().setCustomId(`vf:deny:${id}`).setLabel('Denegar').setStyle(ButtonStyle.Danger);
+    const closeBtn   = new ButtonBuilder().setCustomId(`vf:close:${id}`).setLabel('Cerrar Ticket').setStyle(ButtonStyle.Secondary);
+    const otherBtn   = new ButtonBuilder().setCustomId(`vf:other:${id}`).setLabel('Otro').setStyle(ButtonStyle.Secondary);
 
     if (immigrationStatus === 'citizen') {
         return [new ActionRowBuilder().addComponents(approveBtn, denyBtn, otherBtn, closeBtn)];
@@ -214,8 +214,8 @@ function buildActionButtons(discordId, immigrationStatus) {
     if (immigrationStatus === 'foreigner') {
         return [
             new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomat').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Visitor Visa').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomático').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Visa de Visitante').setStyle(ButtonStyle.Secondary),
                 denyBtn,
                 otherBtn,
             ),
@@ -224,15 +224,7 @@ function buildActionButtons(discordId, immigrationStatus) {
     }
 
     if (immigrationStatus === 'hostile') {
-        return [
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`vf:deportee:${id}`).setLabel('Deportee').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId(`vf:terrorist:${id}`).setLabel('Terrorist').setStyle(ButtonStyle.Danger),
-                denyBtn,
-                otherBtn,
-            ),
-            new ActionRowBuilder().addComponents(closeBtn)
-        ];
+        return [new ActionRowBuilder().addComponents(denyBtn, otherBtn, closeBtn)];
     }
 
     return [new ActionRowBuilder().addComponents(denyBtn, otherBtn, closeBtn)];
