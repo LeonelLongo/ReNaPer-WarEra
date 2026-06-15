@@ -4,3 +4,9 @@
 [2026-06-15T19:09:27.206Z] [INFO] [DEPLOY] Loaded command: verify
 [2026-06-15T19:09:27.207Z] [INFO] [DEPLOY] Registering 4 slash command(s)...
 [2026-06-15T19:09:27.575Z] [INFO] [DEPLOY] Slash commands registered successfully.
+[2026-06-15T20:51:25.432Z] [INFO] [DEPLOY] Loaded command: manualverify
+[2026-06-15T20:51:25.436Z] [INFO] [DEPLOY] Loaded command: setverification
+[2026-06-15T20:51:25.437Z] [INFO] [DEPLOY] Loaded command: unverify
+[2026-06-15T20:51:25.439Z] [INFO] [DEPLOY] Loaded command: verify
+[2026-06-15T20:51:25.440Z] [INFO] [DEPLOY] Registering 4 slash command(s)...
+[2026-06-15T20:51:25.999Z] [INFO] [DEPLOY] Slash commands registered successfully.
