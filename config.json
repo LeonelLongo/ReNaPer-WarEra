@@ -1,0 +1,33 @@
+{
+  "token": "MTUxNTgwMTE3ODE5NjE1MjQwMQ.GpK8F_.jbINlq6ZOAfO1X1CWujNwjAxHvdIMoC5lzk74M",
+  "clientId": "1515801178196152401",
+  "guildId": "1507340887175331892",
+  "countryId": "6813b6d546e731854c7ac832",
+  "adminUsers": [],
+  "roles": {
+    "unverified": "1373422634854781129",
+    "verified": "1491558951643254874",
+    "citizen": "1373403584049189014",
+    "governmentOfficial": "1373405071617822791",
+    "cabinet": "1478190014889197699",
+    "congress": "1491559230719918233",
+    "president": "1373447349761736734",
+    "vicePresident": "1373447558164254870",
+    "secretaryOfState": "1397289690339479683",
+    "secretaryOfDefense": "1401740927482986629",
+    "secretaryOfTreasury": "1401741155825352888",
+    "greenCardHolder": "1444330077876654161",
+    "diplomat": "1471283040058609919",
+    "visitorVisa": "1491531026206429424",
+    "deportee": "",
+    "warBuild": "",
+    "econBuild": "",
+    "verifier": "1491560521562984599"
+  },
+  "channels": {
+    "portOfEntry": "1373849644508909609",
+    "ticketsCategory": "1397315202478899231",
+    "roleLogs": "1491560826925092874",
+    "logs": "1491560826925092874"
+  }
+}

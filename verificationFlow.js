@@ -1,0 +1,317 @@
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
+const config              = require('./config.json');
+const gameApi             = require('./gameApi');
+const buildClassifier     = require('./buildClassifier');
+const immigrationResolver = require('./immigrationResolver');
+const verificationStore   = require('./verificationStore');
+const logger              = require('./logger');
+
+// ── Profile lookup ───────────────────────────────────────────────────────────
+
+async function lookupProfile(input) {
+    const trimmed = input.trim();
+    const urlMatch = trimmed.match(/\/user\/([a-f0-9]{24})/i);
+    const rawId    = urlMatch?.[1] ?? (trimmed.match(/^[a-f0-9]{24}$/) ? trimmed : null);
+
+    let profile = null;
+
+    if (rawId) {
+        profile = await gameApi.getUser(rawId);
+    } else {
+        const results = await gameApi.search(trimmed);
+        if (!results?.userIds?.length) return null;
+
+        const lower = trimmed.toLowerCase();
+        let fallback = null;
+
+        for (const userId of results.userIds) {
+            const p = await gameApi.getUser(userId);
+            if (!p) continue;
+            if (p.username?.toLowerCase() === lower) { profile = p; break; }
+            if (!fallback) fallback = p;
+        }
+
+        if (!profile) profile = fallback;
+    }
+
+    if (!profile) return null;
+
+    const countryId = typeof profile.country === 'object' ? profile.country?._id : profile.country;
+    let country = null;
+    let govPosition = null;
+
+    if (countryId) {
+        country = await gameApi.getCountry(countryId);
+        govPosition = await getGovPosition(profile._id, countryId);
+    }
+
+    const build = buildClassifier.classify(profile.skills);
+    const { immigrationStatus, subStatus } = await immigrationResolver.resolve(
+        countryId,
+        govPosition !== null && countryId !== config.countryId
+    );
+
+    const isLocalGov = immigrationStatus === 'citizen' && govPosition !== null;
+    const govRole = immigrationResolver.resolveGovRole(govPosition, countryId);
+
+    let muName = null;
+    let muRole = null;
+    if (profile.mu) {
+        const mu = await gameApi.getMU(profile.mu);
+        muName = mu?.name ?? null;
+        if (mu) {
+            const uid = profile._id;
+            if (mu.roles?.managers?.includes(uid))    muRole = 'manager';
+            else if (mu.roles?.commanders?.includes(uid)) muRole = 'commander';
+            else if (mu.members?.includes(uid))        muRole = 'member';
+        }
+    }
+
+    return { profile, country, countryId, govPosition, build, immigrationStatus, subStatus, isLocalGov, govRole, muName, muRole };
+}
+
+async function getGovPosition(gameUserId, countryId) {
+    const gov = await gameApi.getGovernment(countryId);
+    if (!gov) return null;
+
+    if (gov.president === gameUserId)           return 'President';
+    if (gov.vicePresident === gameUserId)       return 'Vice President';
+    if (gov.minOfDefense === gameUserId)        return 'Minister of Defense';
+    if (gov.minOfForeignAffairs === gameUserId) return 'Minister of Foreign Affairs';
+    if (gov.minOfEconomy === gameUserId)        return 'Minister of Economy';
+    if (gov.congressMembers?.includes(gameUserId)) return 'Congress Member';
+    return null;
+}
+
+// ── Embeds ───────────────────────────────────────────────────────────────────
+
+const STATUS_COLOR = {
+    citizen:   0x2ECC71,
+    foreigner: 0x3498DB,
+    hostile:   0xED4245,
+};
+
+const STATUS_LABEL = {
+    citizen:   'Citizen',
+    foreigner: 'Foreigner',
+    hostile:   'Hostile',
+};
+
+const SUB_STATUS_LABEL = {
+    greenCardHolder: 'Green Card Holder',
+    diplomat:        'Diplomat',
+    visitorVisa:     'Visitor Visa',
+    deportee:        'Deportee',
+    terrorist:       'Designated Terrorist',
+};
+
+const GOV_POSITION_LABEL = {
+    'President':                   'President',
+    'Vice President':              'Vice President',
+    'Minister of Defense':         'Minister of Defense',
+    'Minister of Foreign Affairs': 'Minister of Foreign Affairs',
+    'Minister of Economy':         'Minister of Economy',
+    'Congress Member':             'Congress Member',
+};
+
+const APPLICATION_STATUS_VALUE = {
+    pending:  'Pending',
+    approved: 'Approved',
+    denied:   'Denied',
+};
+
+function flag(code) {
+    if (!code || code.length !== 2) return '';
+    return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
+}
+
+function buildCondensedEmbed(data, discordUser) {
+    const { profile, country } = data;
+    const countryFlag = flag(country?.code);
+
+    const embed = new EmbedBuilder()
+        .setTitle(`${countryFlag} ${profile.username}`)
+        .setColor(0x95A5A6)
+        .setDescription('Is this you?')
+        .addFields(
+            { name: 'Level',   value: String(profile.leveling?.level ?? '?'), inline: true },
+            { name: 'Country', value: `${countryFlag} ${country?.name ?? 'Unknown'}`, inline: true },
+        )
+        .setTimestamp();
+
+    if (profile.avatarUrl) embed.setThumbnail(profile.avatarUrl);
+    return embed;
+}
+
+function buildApplicationEmbed(data, discordUser, applicationStatus = 'pending') {
+    const { profile, country, govPosition, build, immigrationStatus, subStatus, muName } = data;
+    const countryFlag = flag(country?.code);
+
+    const govLabel = govPosition ? (GOV_POSITION_LABEL[govPosition] ?? govPosition) : null;
+    const countryValue = govLabel
+        ? `${countryFlag} ${country?.name ?? 'Unknown'}\n${govLabel}`
+        : `${countryFlag} ${country?.name ?? 'Unknown'}`;
+
+    const statusValue = subStatus
+        ? `${STATUS_LABEL[immigrationStatus]}\n${SUB_STATUS_LABEL[subStatus] ?? subStatus}`
+        : STATUS_LABEL[immigrationStatus];
+
+    const MU_ROLE_LABEL = { manager: 'Manager', commander: 'Commander' };
+    const muRoleLine = data.muRole && MU_ROLE_LABEL[data.muRole] ? `\n${MU_ROLE_LABEL[data.muRole]}` : '';
+    const muValue = muName && profile.mu
+        ? `[${muName}](https://app.warera.io/mu/${profile.mu})${muRoleLine}`
+        : 'None';
+
+    const buildValue = build ? build.charAt(0).toUpperCase() + build.slice(1) : 'Unclassified';
+
+    const embed = new EmbedBuilder()
+        .setTitle(`${countryFlag} ${profile.username}`)
+        .setURL(`https://app.warera.io/user/${profile._id}`)
+        .setColor(STATUS_COLOR[immigrationStatus] ?? 0x95A5A6)
+        .setAuthor({ name: 'Immigration Application' })
+        .setTimestamp();
+
+    if (profile.avatarUrl) embed.setThumbnail(profile.avatarUrl);
+
+    embed.addFields(
+        { name: 'Discord',            value: `<@${discordUser.id}>`,                                      inline: true },
+        { name: 'Level',              value: String(profile.leveling?.level ?? '?'),                      inline: true },
+        { name: 'Country',            value: countryValue,                                                 inline: true },
+        { name: 'MU',                 value: muValue,                                                      inline: true },
+        { name: 'Build',              value: buildValue,                                                   inline: true },
+        { name: 'Suggested',          value: statusValue,                                                  inline: true },
+        { name: 'Application Status', value: APPLICATION_STATUS_VALUE[applicationStatus] ?? 'Pending',    inline: true },
+    );
+
+    return embed;
+}
+
+function updateEmbedApplicationStatus(embed, status) {
+    const updated = EmbedBuilder.from(embed);
+    const fields  = [...(updated.data.fields ?? [])];
+    const idx     = fields.findIndex(f => f.name === 'Application Status');
+    if (idx >= 0) {
+        fields[idx] = { name: 'Application Status', value: APPLICATION_STATUS_VALUE[status] ?? status, inline: true };
+        updated.setFields(fields);
+    }
+    return updated;
+}
+
+// ── Buttons ──────────────────────────────────────────────────────────────────
+
+function buildActionButtons(discordId, immigrationStatus) {
+    const id = discordId;
+
+    const approveBtn = new ButtonBuilder().setCustomId(`vf:approve:${id}`).setLabel('Approve Citizen').setStyle(ButtonStyle.Success);
+    const denyBtn    = new ButtonBuilder().setCustomId(`vf:deny:${id}`).setLabel('Deny').setStyle(ButtonStyle.Danger);
+    const closeBtn   = new ButtonBuilder().setCustomId(`vf:close:${id}`).setLabel('Close Ticket').setStyle(ButtonStyle.Secondary);
+    const otherBtn   = new ButtonBuilder().setCustomId(`vf:other:${id}`).setLabel('Other').setStyle(ButtonStyle.Secondary);
+
+    if (immigrationStatus === 'citizen') {
+        return [new ActionRowBuilder().addComponents(approveBtn, denyBtn, otherBtn, closeBtn)];
+    }
+
+    if (immigrationStatus === 'foreigner') {
+        return [
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomat').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Visitor Visa').setStyle(ButtonStyle.Secondary),
+                denyBtn,
+                otherBtn,
+            ),
+            new ActionRowBuilder().addComponents(closeBtn)
+        ];
+    }
+
+    if (immigrationStatus === 'hostile') {
+        return [
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`vf:deportee:${id}`).setLabel('Deportee').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`vf:terrorist:${id}`).setLabel('Terrorist').setStyle(ButtonStyle.Danger),
+                denyBtn,
+                otherBtn,
+            ),
+            new ActionRowBuilder().addComponents(closeBtn)
+        ];
+    }
+
+    return [new ActionRowBuilder().addComponents(denyBtn, otherBtn, closeBtn)];
+}
+
+// ── Ticket ───────────────────────────────────────────────────────────────────
+
+async function openTicket(guild, discordUser, lookupData) {
+    const existing = await verificationStore.getPending(discordUser.id);
+    if (existing?.ticketChannelId) {
+        const ch = guild.channels.cache.get(existing.ticketChannelId);
+        if (ch) return { channel: ch, alreadyOpen: true };
+        await verificationStore.removePending(discordUser.id);
+    }
+
+    const { profile, country, countryId } = lookupData;
+    const displayName = discordUser.displayName ?? discordUser.username;
+    const slug = displayName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+    const channelName = `applying-${slug}`;
+
+    const verifyRoles = [
+        config.roles.president,
+        config.roles.secretaryOfState,
+        config.roles.governmentOfficial,
+        config.roles.verifier,
+    ].filter(Boolean);
+
+    const permissionOverwrites = [
+        { id: guild.id,          deny:  ['ViewChannel'] },
+        { id: discordUser.id,    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'] },
+        ...verifyRoles.map(roleId => ({
+            id: roleId, allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+        }))
+    ];
+
+    const channel = await guild.channels.create({
+        name: channelName,
+        type: ChannelType.GuildText,
+        parent: config.channels.ticketsCategory || null,
+        permissionOverwrites,
+        reason: `Immigration application — ${discordUser.user?.tag ?? discordUser.tag ?? discordUser.id}`
+    });
+
+    await verificationStore.setPending(discordUser.id, {
+        gameUserId:      profile._id,
+        gameUsername:    profile.username,
+        countryId,
+        countryCode:     country?.code ?? '',
+        countryName:     country?.name ?? 'Unknown',
+        ticketChannelId: channel.id,
+        channelSlug:     slug,
+    });
+
+    const condensed = buildCondensedEmbed(lookupData, discordUser);
+    const confirmRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`vf:confirm:${discordUser.id}`)
+            .setLabel("Yes, that's me")
+            .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+            .setCustomId(`vf:tryagain:${discordUser.id}`)
+            .setLabel('Try Again')
+            .setStyle(ButtonStyle.Danger),
+    );
+
+    await channel.send({
+        content:    `<@${discordUser.id}> — Is this your in-game account?`,
+        embeds:     [condensed],
+        components: [confirmRow],
+    });
+
+    const tag = discordUser.user?.tag ?? discordUser.tag ?? discordUser.id;
+    logger.info('VERFLOW', `Ticket opened for ${tag} -> ${channel.name}`);
+    return { channel, alreadyOpen: false };
+}
+
+module.exports = {
+    lookupProfile, openTicket,
+    buildCondensedEmbed, buildApplicationEmbed,
+    buildActionButtons, updateEmbedApplicationStatus,
+    getGovPosition, flag,
+};
