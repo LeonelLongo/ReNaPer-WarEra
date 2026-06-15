@@ -97,6 +97,7 @@ module.exports = {
             const member = await interaction.guild.members.fetch(targetUser.id);
             roleLogger.pendingReasons.set(member.id, { reason: 'setverification override', actor: `<@${interaction.user.id}>` });
             await roleSync.sync(member, record);
+            await member.setNickname(profile.username, 'setverification override').catch(() => {});
             if (config.roles.unverified && member.roles.cache.has(config.roles.unverified)) {
                 await member.roles.remove(config.roles.unverified).catch(() => {});
             }

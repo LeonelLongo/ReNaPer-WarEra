@@ -425,6 +425,7 @@ async function handleTicketButton(interaction, action, targetDiscordId) {
         const member = await interaction.guild.members.fetch(targetDiscordId);
         roleLogger.pendingReasons.set(member.id, { reason: 'Verification approved', actor: `<@${interaction.user.id}>` });
         await roleSync.sync(member, record);
+        await member.setNickname(pending.gameUsername, 'Verification approved').catch(() => {});
 
         if (config.roles.unverified && member.roles.cache.has(config.roles.unverified)) {
             await member.roles.remove(config.roles.unverified).catch(() => {});

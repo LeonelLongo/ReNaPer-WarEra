@@ -94,6 +94,7 @@ module.exports = {
             const member = await interaction.guild.members.fetch(targetUser.id);
             roleLogger.pendingReasons.set(member.id, { reason: 'Manual verification', actor: `<@${interaction.user.id}>` });
             await roleSync.sync(member, record);
+            await member.setNickname(profile.username, 'Manual verification').catch(() => {});
         } catch (err) {
             logger.error('MANUALVERIFY', `Role sync failed for ${targetUser.id}: ${err.message}`);
             return interaction.editReply(`Verified and saved, but role assignment failed: ${err.message}`);
