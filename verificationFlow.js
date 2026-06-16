@@ -92,32 +92,32 @@ const STATUS_COLOR = {
 };
 
 const STATUS_LABEL = {
-    citizen:   'Citizen',
-    foreigner: 'Foreigner',
-    hostile:   'Hostile',
+    citizen:   'Ciudadano',
+    foreigner: 'Extranjero',
+    hostile:   'Hostil',
 };
 
 const SUB_STATUS_LABEL = {
-    greenCardHolder: 'Green Card Holder',
-    diplomat:        'Diplomat',
-    visitorVisa:     'Visitor Visa',
-    deportee:        'Deportee',
-    terrorist:       'Designated Terrorist',
+    greenCardHolder: 'Proxi',
+    diplomat:        'Diplomático',
+    visitorVisa:     'Turista',
+    deportee:        'Deportado',
+    terrorist:       'Terrorista Designado',
 };
 
 const GOV_POSITION_LABEL = {
-    'President':                   'President',
-    'Vice President':              'Vice President',
-    'Minister of Defense':         'Minister of Defense',
-    'Minister of Foreign Affairs': 'Minister of Foreign Affairs',
-    'Minister of Economy':         'Minister of Economy',
-    'Congress Member':             'Congress Member',
+    'President':                   'Presidente',
+    'Vice President':              'Vicepresidente',
+    'Minister of Defense':         'Ministro de Defensa',
+    'Minister of Foreign Affairs': 'Ministro de Relaciones Exteriores',
+    'Minister of Economy':         'Ministro de Economía',
+    'Congress Member':             'Miembro del Congreso',
 };
 
 const APPLICATION_STATUS_VALUE = {
-    pending:  'Pending',
-    approved: 'Approved',
-    denied:   'Denied',
+    pending:  'Pendiente',
+    approved: 'Aprobado',
+    denied:   'Denegado',
 };
 
 function flag(code) {
@@ -134,8 +134,8 @@ function buildCondensedEmbed(data, discordUser) {
         .setColor(0x95A5A6)
         .setDescription('¿Eres vos?')
         .addFields(
-            { name: 'Level',   value: String(profile.leveling?.level ?? '?'), inline: true },
-            { name: 'Country', value: `${countryFlag} ${country?.name ?? 'Unknown'}`, inline: true },
+            { name: 'Nivel',   value: String(profile.leveling?.level ?? '?'), inline: true },
+            { name: 'País', value: `${countryFlag} ${country?.name ?? 'Desconocido'}`, inline: true },
         )
         .setTimestamp();
 
@@ -156,31 +156,32 @@ function buildApplicationEmbed(data, discordUser, applicationStatus = 'pending')
         ? `${STATUS_LABEL[immigrationStatus]}\n${SUB_STATUS_LABEL[subStatus] ?? subStatus}`
         : STATUS_LABEL[immigrationStatus];
 
-    const MU_ROLE_LABEL = { manager: 'Manager', commander: 'Commander' };
+    const MU_ROLE_LABEL = { manager: 'Gerente', commander: 'Comandante' };
     const muRoleLine = data.muRole && MU_ROLE_LABEL[data.muRole] ? `\n${MU_ROLE_LABEL[data.muRole]}` : '';
     const muValue = muName && profile.mu
         ? `[${muName}](https://app.warera.io/mu/${profile.mu})${muRoleLine}`
-        : 'None';
+        : 'Ninguna';
 
-    const buildValue = build ? build.charAt(0).toUpperCase() + build.slice(1) : 'Unclassified';
+    const BUILD_LABEL = { war: 'Soldado', econ: 'Economista' };
+    const buildValue = BUILD_LABEL[build] ?? 'Sin clasificar';
 
     const embed = new EmbedBuilder()
         .setTitle(`${countryFlag} ${profile.username}`)
         .setURL(`https://app.warera.io/user/${profile._id}`)
         .setColor(STATUS_COLOR[immigrationStatus] ?? 0x95A5A6)
-        .setAuthor({ name: 'Immigration Application' })
+        .setAuthor({ name: 'Solicitud de Ingreso' })
         .setTimestamp();
 
     if (profile.avatarUrl) embed.setThumbnail(profile.avatarUrl);
 
     embed.addFields(
-        { name: 'Discord',            value: `<@${discordUser.id}>`,                                      inline: true },
-        { name: 'Level',              value: String(profile.leveling?.level ?? '?'),                      inline: true },
-        { name: 'Country',            value: countryValue,                                                 inline: true },
-        { name: 'MU',                 value: muValue,                                                      inline: true },
-        { name: 'Build',              value: buildValue,                                                   inline: true },
-        { name: 'Suggested',          value: statusValue,                                                  inline: true },
-        { name: 'Application Status', value: APPLICATION_STATUS_VALUE[applicationStatus] ?? 'Pending',    inline: true },
+        { name: 'Discord',   value: `<@${discordUser.id}>`,                                   inline: true },
+        { name: 'Nivel',     value: String(profile.leveling?.level ?? '?'),                 inline: true },
+        { name: 'País',      value: countryValue,                                            inline: true },
+        { name: 'MU',        value: muValue,                                                 inline: true },
+        { name: 'Build',     value: buildValue,                                              inline: true },
+        { name: 'Sugerido',  value: statusValue,                                             inline: true },
+        { name: 'Estado',    value: APPLICATION_STATUS_VALUE[applicationStatus] ?? 'Pendiente', inline: true },
     );
 
     return embed;

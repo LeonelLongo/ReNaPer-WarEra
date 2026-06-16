@@ -34,7 +34,7 @@ module.exports = {
 
     async execute(interaction) {
         if (!canUse(interaction.member)) {
-            return interaction.reply({ content: 'You do not have permission to use this command.', flags: 64 });
+            return interaction.reply({ content: 'No tenés permisos para usar este comando.', flags: 64 });
         }
 
         await interaction.deferReply({ flags: 64 });
@@ -45,16 +45,16 @@ module.exports = {
 
         if (await verificationStore.isVerified(targetUser.id)) {
             const existing = await verificationStore.get(targetUser.id);
-            return interaction.editReply(`<@${targetUser.id}> is already verified as **${existing.gameUsername}**. Use /unverify first.`);
+            return interaction.editReply(`<@${targetUser.id}> ya está verificado como **${existing.gameUsername}**. Usá /unverify primero.`);
         }
 
         const data = await verificationFlow.lookupProfile(profileInput);
-        if (!data) return interaction.editReply('Could not find that game profile.');
+        if (!data) return interaction.editReply('No se encontró ese perfil del juego.');
 
         const { profile, country, countryId } = data;
 
         const dupe = await verificationStore.findByGameId(profile._id);
-        if (dupe) return interaction.editReply(`This game account is already linked to <@${dupe[0]}>.`);
+        if (dupe) return interaction.editReply(`Esa cuenta del juego ya está vinculada a <@${dupe[0]}>.`);
 
         let { immigrationStatus, subStatus } = data;
         if (statusOverride) {
@@ -97,22 +97,22 @@ module.exports = {
             await member.setNickname(profile.username, 'Manual verification').catch(() => {});
         } catch (err) {
             logger.error('MANUALVERIFY', `Role sync failed for ${targetUser.id}: ${err.message}`);
-            return interaction.editReply(`Verified and saved, but role assignment failed: ${err.message}`);
+            return interaction.editReply(`Verificado y guardado, pero la asignación de roles falló: ${err.message}`);
         }
 
         const f = verificationFlow.flag(country?.code);
 
         const embed = new EmbedBuilder()
-            .setTitle('Manual Verification Complete')
+            .setTitle('Verificación Manual Completada')
             .setColor(0x2ECC71)
             .setThumbnail(profile.avatarUrl || null)
             .addFields(
-                { name: 'Discord',  value: `<@${targetUser.id}>`,       inline: true },
-                { name: 'In-Game',  value: profile.username,             inline: true },
-                { name: 'Country',  value: `${f} ${country?.name ?? 'Unknown'}`, inline: true },
-                { name: 'Status',   value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
-                { name: 'Build',    value: data.build ?? 'Unclassified', inline: true },
-                { name: 'Approved', value: `<@${interaction.user.id}>`, inline: true },
+                { name: 'Discord',      value: `<@${targetUser.id}>`,       inline: true },
+                { name: 'En el juego', value: profile.username,             inline: true },
+                { name: 'País',        value: `${f} ${country?.name ?? 'Desconocido'}`, inline: true },
+                { name: 'Estado',      value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
+                { name: 'Build',       value: data.build ?? 'Sin clasificar', inline: true },
+                { name: 'Aprobado por', value: `<@${interaction.user.id}>`, inline: true },
             )
             .setTimestamp();
 

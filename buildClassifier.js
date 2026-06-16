@@ -5,7 +5,7 @@
 const WAR_SKILLS  = new Set(['attack', 'precision', 'criticalChance', 'criticalDamages', 'armor', 'dodge', 'health', 'lootChance', 'hunger']);
 const ECON_SKILLS = new Set(['entrepreneurship', 'energy', 'production', 'companies', 'management']);
 
-const THRESHOLD = 0.80;
+const THRESHOLD = 0.60;
 
 function classify(skills) {
     if (!skills || typeof skills !== 'object') return null;

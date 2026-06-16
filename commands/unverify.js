@@ -22,7 +22,7 @@ module.exports = {
 
     async execute(interaction) {
         if (!canUse(interaction.member)) {
-            return interaction.reply({ content: 'You do not have permission to use this command.', flags: 64 });
+            return interaction.reply({ content: 'No tenés permisos para usar este comando.', flags: 64 });
         }
 
         await interaction.deferReply({ flags: 64 });
@@ -31,7 +31,7 @@ module.exports = {
         const reason     = interaction.options.getString('reason') ?? 'No reason provided';
 
         if (!await verificationStore.isVerified(targetUser.id)) {
-            return interaction.editReply(`<@${targetUser.id}> is not verified.`);
+            return interaction.editReply(`<@${targetUser.id}> no está verificado.`);
         }
 
         const record = await verificationStore.get(targetUser.id);
@@ -49,14 +49,14 @@ module.exports = {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle('Verification Removed')
+            .setTitle('Verificación Eliminada')
             .setColor(0xED4245)
             .addFields(
-                { name: 'Discord',    value: `<@${targetUser.id}>`,       inline: true },
-                { name: 'Was',        value: record.gameUsername,          inline: true },
-                { name: 'Status',     value: record.immigrationStatus,     inline: true },
-                { name: 'Removed By', value: `<@${interaction.user.id}>`, inline: true },
-                { name: 'Reason',     value: reason,                       inline: false },
+                { name: 'Discord',        value: `<@${targetUser.id}>`,       inline: true },
+                { name: 'Era',            value: record.gameUsername,          inline: true },
+                { name: 'Estado',         value: record.immigrationStatus,     inline: true },
+                { name: 'Eliminado por',  value: `<@${interaction.user.id}>`, inline: true },
+                { name: 'Razón',          value: reason,                       inline: false },
             )
             .setTimestamp();
 

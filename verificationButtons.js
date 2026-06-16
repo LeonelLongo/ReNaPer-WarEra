@@ -28,7 +28,7 @@ async function denyAndClose(guild, targetId, reason) {
     try {
         await channel.setName(`denied-${slug}`).catch(() => {});
         await channel.send({
-            content: `<@${targetId}> — ${reason} Your application has been denied. You may start over by using the port of entry.`,
+            content: `<@${targetId}> — ${reason} Tu solicitud ha sido denegada. Podés volver a intentarlo usando el puerto de entrada.`,
         });
         setTimeout(() => channel.delete('Verification denied').catch(() => {}), 10_000);
     } catch (err) {
@@ -41,7 +41,7 @@ function scheduleChallengeTimeout(guild, targetId, issuedAt) {
     if (_codeTimeouts.has(targetId)) clearTimeout(_codeTimeouts.get(targetId));
     const remaining = Math.max(0, CODE_TIMEOUT_MS - (Date.now() - issuedAt));
     const tid = setTimeout(() => {
-        denyAndClose(guild, targetId, 'You did not rename a company within 15 minutes.').catch(() => {});
+        denyAndClose(guild, targetId, 'No renombraste una empresa en 15 minutos.').catch(() => {});
     }, remaining);
     _codeTimeouts.set(targetId, tid);
 }
@@ -66,25 +66,25 @@ const BUTTON_STATUS_MAP = {
 
 async function handleApply(interaction) {
     if (await verificationStore.isVerified(interaction.user.id)) {
-        return interaction.reply({ content: 'You are already verified.', flags: 64 });
+        return interaction.reply({ content: 'Ya estás verificado.', flags: 64 });
     }
 
     const pending = await verificationStore.getPending(interaction.user.id);
     if (pending?.ticketChannelId) {
         const ch = interaction.guild.channels.cache.get(pending.ticketChannelId);
-        if (ch) return interaction.reply({ content: `You already have an open application: ${ch}`, flags: 64 });
+        if (ch) return interaction.reply({ content: `Ya tenés una solicitud abierta: ${ch}`, flags: 64 });
         await verificationStore.removePending(interaction.user.id);
     }
 
     const modal = new ModalBuilder()
         .setCustomId('vf:modal:apply')
-        .setTitle('Immigration Application');
+        .setTitle('Solicitud de Ingreso');
 
     const profileInput = new TextInputBuilder()
         .setCustomId('profile')
-        .setLabel('In-Game Username, Player ID, or Profile URL')
+        .setLabel('Usuario, ID de jugador o URL de perfil')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('e.g. JohnDoe or https://app.warera.io/user/...')
+        .setPlaceholder('Ej: JohnDoe o https://app.warera.io/user/...')
         .setRequired(true);
 
     modal.addComponents(new ModalRow().addComponents(profileInput));
@@ -95,27 +95,27 @@ async function handleModalApply(interaction) {
     await interaction.deferReply({ flags: 64 });
 
     if (await verificationStore.isVerified(interaction.user.id)) {
-        return interaction.editReply('You are already verified.');
+        return interaction.editReply('Ya estás verificado.');
     }
 
     const profileInput = interaction.fields.getTextInputValue('profile');
     const data = await verificationFlow.lookupProfile(profileInput);
     if (!data) {
-        return interaction.editReply('Could not find that game profile. Check your input and try again.');
+        return interaction.editReply('No se encontró ese perfil del juego. Revisá tu entrada e intentá de nuevo.');
     }
 
     const dupe = await verificationStore.findByGameId(data.profile._id);
     if (dupe) {
-        return interaction.editReply('That game account is already linked to another Discord user.');
+        return interaction.editReply('Esa cuenta del juego ya está vinculada a otro usuario de Discord.');
     }
 
     try {
         const { channel, alreadyOpen } = await verificationFlow.openTicket(interaction.guild, interaction.member, data);
-        if (alreadyOpen) return interaction.editReply(`You already have an open application: ${channel}`);
-        return interaction.editReply(`Your application has been submitted. Please go to ${channel} and wait for a staff member.`);
+        if (alreadyOpen) return interaction.editReply(`Ya tenés una solicitud abierta: ${channel}`);
+        return interaction.editReply(`Tu solicitud fue enviada. Por favor dirigite a ${channel} y esperá a un miembro del staff.`);
     } catch (err) {
         logger.error('VF_BUTTON', `Modal apply failed for ${interaction.user.id}: ${err.message}`);
-        return interaction.editReply('Something went wrong opening your ticket. Please try again.');
+        return interaction.editReply('Algo salió mal al abrir tu ticket. Por favor intentá de nuevo.');
     }
 }
 
@@ -123,7 +123,7 @@ async function handleModalApply(interaction) {
 
 async function handleConfirm(interaction, targetId) {
     if (interaction.user.id !== targetId) {
-        return interaction.reply({ content: 'Only the applicant can confirm their identity.', flags: 64 });
+        return interaction.reply({ content: 'Solo el solicitante puede confirmar su identidad.', flags: 64 });
     }
 
     await interaction.deferUpdate();
@@ -131,7 +131,7 @@ async function handleConfirm(interaction, targetId) {
     try {
         const pending = await verificationStore.getPending(targetId);
         if (!pending) {
-            return interaction.followUp({ content: 'Application record not found. Please start again.', flags: 64 });
+            return interaction.followUp({ content: 'No se encontró el registro de la solicitud. Por favor comenzá de nuevo.', flags: 64 });
         }
 
         const code     = `AR-${String(Math.floor(10000 + Math.random() * 90000))}`;
@@ -166,7 +166,7 @@ async function handleConfirm(interaction, targetId) {
         logger.info('VF_BUTTON', `Confirm: code ${code} issued to ${targetId}`);
     } catch (err) {
         logger.error('VF_BUTTON', `handleConfirm failed for ${targetId}: ${err.message}`);
-        await interaction.followUp({ content: 'Something went wrong. Please try again.', flags: 64 }).catch(() => {});
+        await interaction.followUp({ content: 'Algo salió mal. Por favor intentá de nuevo.', flags: 64 }).catch(() => {});
     }
 }
 
@@ -183,32 +183,32 @@ async function handleTryAgain(interaction, targetId) {
                 .some(r => interaction.member.roles.cache.has(r));
 
         if (!isApplicant && !isVerifier) {
-            return interaction.reply({ content: 'You do not have permission to do that.', flags: 64 });
+            return interaction.reply({ content: 'No tenés permisos para hacer eso.', flags: 64 });
         }
 
         await interaction.deferUpdate();
         const reason = isApplicant
-            ? 'You chose not to complete the company name verification.'
-            : 'A staff member cancelled the verification step.';
+            ? 'Elegiste no completar la verificación por nombre de empresa.'
+            : 'Un miembro del staff canceló el paso de verificación.';
         await denyAndClose(interaction.guild, targetId, reason);
         return;
     }
 
     if (interaction.user.id !== targetId) {
-        return interaction.reply({ content: 'Only the applicant can use Try Again.', flags: 64 });
+        return interaction.reply({ content: 'Solo el solicitante puede usar Intentar de nuevo.', flags: 64 });
     }
 
     await verificationStore.updatePending(targetId, { challengeCode: null, challengeCodeIssuedAt: null });
 
     const modal = new ModalBuilder()
         .setCustomId(`vf:modal:retry:${targetId}`)
-        .setTitle('Try Again — Enter Profile');
+        .setTitle('Intentar de nuevo — Ingresá tu perfil');
 
     const profileInput = new TextInputBuilder()
         .setCustomId('profile')
-        .setLabel('In-Game Username, Player ID, or Profile URL')
+        .setLabel('Usuario, ID de jugador o URL de perfil')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('e.g. JohnDoe or https://app.warera.io/user/...')
+        .setPlaceholder('Ej: JohnDoe o https://app.warera.io/user/...')
         .setRequired(true);
 
     modal.addComponents(new ModalRow().addComponents(profileInput));
@@ -221,12 +221,12 @@ async function handleModalRetry(interaction, targetId) {
     const profileInput = interaction.fields.getTextInputValue('profile');
     const data = await verificationFlow.lookupProfile(profileInput);
     if (!data) {
-        return interaction.editReply('Could not find that game profile. Check your input and try again.');
+        return interaction.editReply('No se encontró ese perfil del juego. Revisá tu entrada e intentá de nuevo.');
     }
 
     const dupe = await verificationStore.findByGameId(data.profile._id);
     if (dupe && dupe[0] !== targetId) {
-        return interaction.editReply('That game account is already linked to another Discord user.');
+        return interaction.editReply('Esa cuenta del juego ya está vinculada a otro usuario de Discord.');
     }
 
     const pending = await verificationStore.getPending(targetId);
@@ -257,7 +257,7 @@ async function handleModalRetry(interaction, targetId) {
 
 async function handleVerifyMe(interaction, targetId) {
     if (interaction.user.id !== targetId) {
-        return interaction.reply({ content: 'Only the applicant can trigger verification.', flags: 64 });
+        return interaction.reply({ content: 'Solo el solicitante puede iniciar la verificación.', flags: 64 });
     }
 
     await interaction.deferUpdate();
@@ -266,7 +266,7 @@ async function handleVerifyMe(interaction, targetId) {
 
     const pending = await verificationStore.getPending(targetId);
     if (!pending?.challengeCode) {
-        return interaction.followUp({ content: 'No verification code found. Please start again.', flags: 64 });
+        return interaction.followUp({ content: 'No se encontró el código de verificación. Por favor comenzá de nuevo.', flags: 64 });
     }
 
     const MAX_ATTEMPTS = 4;
@@ -281,7 +281,7 @@ async function handleVerifyMe(interaction, targetId) {
 
     if (!companyData) {
         await interaction.message.edit({ components: originalComponents }).catch(() => {});
-        return interaction.followUp({ content: `<@${targetId}> — Could not reach the game servers. Please wait and try again.` });
+        return interaction.followUp({ content: `<@${targetId}> — No se pudo conectar con los servidores del juego. Por favor esperá e intentá de nuevo.` });
     }
 
     const companyIds = Array.isArray(companyData) ? companyData : (companyData.items ?? []);
@@ -294,13 +294,13 @@ async function handleVerifyMe(interaction, targetId) {
     if (!found) {
         await interaction.message.edit({ components: originalComponents }).catch(() => {});
         return interaction.followUp({
-            content: `<@${targetId}> — Could not find a company named **\`${pending.challengeCode}\`** on your account. Make sure the name is exact and try again.`,
+            content: `<@${targetId}> — No se encontró una empresa con el nombre **\`${pending.challengeCode}\`** en tu cuenta. Asegurate de que el nombre sea exacto e intentá de nuevo.`,
         });
     }
 
     const data = await verificationFlow.lookupProfile(`https://app.warera.io/user/${pending.gameUserId}`);
     if (!data) {
-        return interaction.followUp({ content: 'Could not re-fetch your game profile. Please contact an administrator.', flags: 64 });
+        return interaction.followUp({ content: 'No se pudo volver a obtener tu perfil del juego. Por favor contactá a un administrador.', flags: 64 });
     }
 
     const fullEmbed = verificationFlow.buildApplicationEmbed(data, interaction.user);
@@ -315,7 +315,7 @@ async function handleVerifyMe(interaction, targetId) {
 
     const slug = pending?.channelSlug ?? targetId;
     await interaction.channel.setName(`processing-${slug}`).catch(() => {});
-    await interaction.message.edit({ content: 'Identity verified.', embeds: [], components: [] }).catch(() => {});
+    await interaction.message.edit({ content: 'Identidad verificada.', embeds: [], components: [] }).catch(() => {});
 
     await interaction.channel.send({
         content:    `${ping}\nIdentidad confirmada — nueva solicitud de ingreso de <@${targetId}>`,
@@ -338,7 +338,7 @@ async function handleTicketButton(interaction, action, targetDiscordId) {
             .filter(Boolean)
             .some(r => actor.roles.cache.has(r));
 
-    if (!canAct) return interaction.editReply('You do not have permission to process applications.');
+    if (!canAct) return interaction.editReply('No tenés permisos para procesar solicitudes.');
 
     if (action === 'other') {
         const id = targetDiscordId;
@@ -355,7 +355,7 @@ async function handleTicketButton(interaction, action, targetDiscordId) {
             ),
         ];
         await interaction.message.edit({ components: allOptions }).catch(() => {});
-        return interaction.editReply('Showing all options.');
+        return interaction.editReply('Mostrando todas las opciones.');
     }
 
     if (action === 'deny') {
@@ -366,32 +366,32 @@ async function handleTicketButton(interaction, action, targetDiscordId) {
         await interaction.channel.setName(`denied-${denySlug}`).catch(() => {});
 
         const closeRow = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId(`vf:close:${targetDiscordId}`).setLabel('Close Ticket').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId(`vf:close:${targetDiscordId}`).setLabel('Cerrar Ticket').setStyle(ButtonStyle.Secondary),
         );
 
         const oldEmbed = interaction.message.embeds[0];
         const editPayload = { components: [closeRow] };
         if (oldEmbed) editPayload.embeds = [updateEmbedApplicationStatus(oldEmbed, 'denied')];
         await interaction.message.edit(editPayload).catch(() => {});
-        await interaction.editReply('Application denied.');
+        await interaction.editReply('Solicitud denegada.');
         return;
     }
 
     if (action === 'close') {
         await verificationStore.removePending(targetDiscordId);
-        await interaction.editReply('Closing ticket...');
+        await interaction.editReply('Cerrando ticket...');
         await interaction.channel.delete('Ticket closed').catch(() => {});
         return;
     }
 
     const statusInfo = BUTTON_STATUS_MAP[action];
-    if (!statusInfo) return interaction.editReply('Unknown action.');
+    if (!statusInfo) return interaction.editReply('Acción desconocida.');
 
     const pending = await verificationStore.getPending(targetDiscordId);
-    if (!pending) return interaction.editReply('No pending application found for this user.');
+    if (!pending) return interaction.editReply('No se encontró una solicitud pendiente para este usuario.');
 
     const data = await verificationFlow.lookupProfile(`https://app.warera.io/user/${pending.gameUserId}`);
-    if (!data) return interaction.editReply('Could not re-fetch game profile. Try again.');
+    if (!data) return interaction.editReply('No se pudo volver a obtener el perfil del juego. Intentá de nuevo.');
 
     const { immigrationStatus, subStatus } = statusInfo;
     const govRole = immigrationStatus === 'citizen'
@@ -434,13 +434,13 @@ async function handleTicketButton(interaction, action, targetDiscordId) {
         }
     } catch (err) {
         logger.error('VF_BUTTON', `Role sync failed for ${targetDiscordId}: ${err.message}`);
-        return interaction.editReply(`Saved but role assignment failed: ${err.message}`);
+        return interaction.editReply(`Guardado, pero la asignación de roles falló: ${err.message}`);
     }
 
     const closeRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`vf:close:${targetDiscordId}`).setLabel('Close Ticket').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId(`vf:close:${targetDiscordId}`).setLabel('Cerrar Ticket').setStyle(ButtonStyle.Secondary),
     );
-    await interaction.editReply(`<@${targetDiscordId}> approved as **${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}**.`);
+    await interaction.editReply(`<@${targetDiscordId}> aprobado como **${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}**.`);
     const oldEmbed = interaction.message.embeds[0];
     const approvePayload = { components: [closeRow] };
     if (oldEmbed) approvePayload.embeds = [updateEmbedApplicationStatus(oldEmbed, 'approved')];
@@ -458,7 +458,7 @@ async function recoverChallengeTimeouts(guild) {
         if (!p.challengeCode || !p.challengeCodeIssuedAt) continue;
         const age = Date.now() - p.challengeCodeIssuedAt;
         if (age >= CODE_TIMEOUT_MS) {
-            await denyAndClose(guild, p.discordId, 'You did not rename a company within 15 minutes.').catch(() => {});
+            await denyAndClose(guild, p.discordId, 'No renombraste una empresa en 15 minutos.').catch(() => {});
         } else {
             scheduleChallengeTimeout(guild, p.discordId, p.challengeCodeIssuedAt);
             recovered++;

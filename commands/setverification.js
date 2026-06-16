@@ -49,7 +49,7 @@ module.exports = {
 
     async execute(interaction) {
         if (!canUse(interaction.member)) {
-            return interaction.reply({ content: 'Cabinet only.', flags: 64 });
+            return interaction.reply({ content: 'Solo para el Gabinete.', flags: 64 });
         }
 
         await interaction.deferReply({ flags: 64 });
@@ -60,7 +60,7 @@ module.exports = {
         const govChoice    = interaction.options.getString('gov') === 'yes';
 
         const data = await verificationFlow.lookupProfile(profileInput);
-        if (!data) return interaction.editReply('Could not find that game profile.');
+        if (!data) return interaction.editReply('No se encontró ese perfil del juego. Intenta colocando el link de tu perfil');
 
         const { profile, country, countryId } = data;
         const { immigrationStatus, subStatus } = STATUS_MAP[roleChoice];
@@ -103,23 +103,23 @@ module.exports = {
             }
         } catch (err) {
             logger.error('SETVERIFY', `Role sync failed for ${targetUser.id}: ${err.message}`);
-            return interaction.editReply(`Record saved but role sync failed: ${err.message}`);
+            return interaction.editReply(`Registro guardado pero la sincronización de roles falló: ${err.message}`);
         }
 
         const f = verificationFlow.flag(country?.code);
 
         const embed = new EmbedBuilder()
-            .setTitle('Verification Updated')
+            .setTitle('Verificación Actualizada')
             .setColor(0x2ECC71)
             .setThumbnail(profile.avatarUrl || null)
             .addFields(
-                { name: 'Discord',    value: `<@${targetUser.id}>`,             inline: true },
-                { name: 'In-Game',    value: profile.username,                   inline: true },
-                { name: 'Country',    value: `${f} ${country?.name ?? 'Unknown'}`, inline: true },
-                { name: 'Status',     value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
-                { name: 'Build',      value: data.build ?? 'Unclassified',       inline: true },
-                { name: 'Government', value: isGovernment ? (govRole ?? 'Yes') : 'No', inline: true },
-                { name: 'Updated By', value: `<@${interaction.user.id}>`,       inline: true },
+                { name: 'Discord',        value: `<@${targetUser.id}>`,             inline: true },
+                { name: 'En el juego',   value: profile.username,                   inline: true },
+                { name: 'País',          value: `${f} ${country?.name ?? 'Desconocido'}`, inline: true },
+                { name: 'Estado',        value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
+                { name: 'Build',         value: data.build ?? 'Sin clasificar',    inline: true },
+                { name: 'Gobierno',      value: isGovernment ? (govRole ?? 'Sí') : 'No', inline: true },
+                { name: 'Actualizado por', value: `<@${interaction.user.id}>`,    inline: true },
             )
             .setTimestamp();
 
