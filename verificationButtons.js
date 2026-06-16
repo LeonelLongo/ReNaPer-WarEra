@@ -81,7 +81,7 @@ async function handleApply(interaction) {
 
     const modal = new ModalBuilder()
         .setCustomId('vf:modal:apply')
-        .setTitle('Solicitud de Ingreso / Immigration Application');
+        .setTitle('Solicitud de Ingreso / Application');
 
     const profileInput = new TextInputBuilder()
         .setCustomId('profile')
