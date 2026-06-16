@@ -215,7 +215,8 @@ function buildActionButtons(discordId, immigrationStatus) {
         return [
             new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomático').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Visa de Visitante').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Turista').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`vf:greencardholder:${id}`).setLabel('Proxi').setStyle(ButtonStyle.Secondary),
                 denyBtn,
                 otherBtn,
             ),
