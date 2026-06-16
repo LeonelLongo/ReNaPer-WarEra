@@ -9,6 +9,8 @@ const roleLogger          = require('../roleLogger');
 const immigrationResolver = require('../immigrationResolver');
 const logger              = require('../logger');
 
+const SEP = '\n――――――――――――――――――――\n';
+
 const STATUS_MAP = {
     citizen:         { immigrationStatus: 'citizen',   subStatus: null },
     greenCardHolder: { immigrationStatus: 'foreigner', subStatus: 'greenCardHolder' },
@@ -26,30 +28,30 @@ function canUse(member) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('setverification')
-        .setDescription('Update a member\'s verification record and roles (Cabinet only)')
+        .setDescription('Actualizar verificación (Gabinete) / Update verification (Cabinet)')
         .addUserOption(opt =>
-            opt.setName('user').setDescription('Discord user to update').setRequired(true))
+            opt.setName('user').setDescription('Usuario a actualizar / User to update').setRequired(true))
         .addStringOption(opt =>
-            opt.setName('profile').setDescription('In-game username, ID, or profile URL').setRequired(true))
+            opt.setName('profile').setDescription('Usuario, ID o URL / Username, ID, or URL').setRequired(true))
         .addStringOption(opt =>
-            opt.setName('role').setDescription('Immigration status to assign').setRequired(true)
+            opt.setName('role').setDescription('Estado a asignar / Status to assign').setRequired(true)
                 .addChoices(
-                    { name: 'Citizen',          value: 'citizen' },
-                    { name: 'Green Card Holder', value: 'greenCardHolder' },
-                    { name: 'Diplomat',          value: 'diplomat' },
-                    { name: 'Visitor Visa',      value: 'visitorVisa' },
-                    { name: 'Deportee',          value: 'deportee' },
+                    { name: 'Ciudadano / Citizen',       value: 'citizen' },
+                    { name: 'Proxi / Green Card Holder', value: 'greenCardHolder' },
+                    { name: 'Diplomático / Diplomat',    value: 'diplomat' },
+                    { name: 'Turista / Visitor Visa',    value: 'visitorVisa' },
+                    { name: 'Deportado / Deportee',      value: 'deportee' },
                 ))
         .addStringOption(opt =>
-            opt.setName('gov').setDescription('Is this user a government official?').setRequired(true)
+            opt.setName('gov').setDescription('¿Es funcionario? / Government official?').setRequired(true)
                 .addChoices(
-                    { name: 'Yes', value: 'yes' },
-                    { name: 'No',  value: 'no' },
+                    { name: 'Sí / Yes', value: 'yes' },
+                    { name: 'No',       value: 'no' },
                 )),
 
     async execute(interaction) {
         if (!canUse(interaction.member)) {
-            return interaction.reply({ content: 'Solo para el Gabinete.', flags: 64 });
+            return interaction.reply({ content: `Solo para el Gabinete.${SEP}Cabinet only.`, flags: 64 });
         }
 
         await interaction.deferReply({ flags: 64 });
@@ -60,7 +62,7 @@ module.exports = {
         const govChoice    = interaction.options.getString('gov') === 'yes';
 
         const data = await verificationFlow.lookupProfile(profileInput);
-        if (!data) return interaction.editReply('No se encontró ese perfil del juego. Intenta colocando el link de tu perfil');
+        if (!data) return interaction.editReply(`No se encontró ese perfil del juego. Intenta colocando el link de tu perfil.${SEP}Could not find that game profile. Try using your profile link.`);
 
         const { profile, country, countryId } = data;
         const { immigrationStatus, subStatus } = STATUS_MAP[roleChoice];
@@ -103,23 +105,23 @@ module.exports = {
             }
         } catch (err) {
             logger.error('SETVERIFY', `Role sync failed for ${targetUser.id}: ${err.message}`);
-            return interaction.editReply(`Registro guardado pero la sincronización de roles falló: ${err.message}`);
+            return interaction.editReply(`Registro guardado pero la sincronización de roles falló: ${err.message}${SEP}Record saved but role sync failed: ${err.message}`);
         }
 
         const f = verificationFlow.flag(country?.code);
 
         const embed = new EmbedBuilder()
-            .setTitle('Verificación Actualizada')
+            .setTitle('Verificación Actualizada / Verification Updated')
             .setColor(0x2ECC71)
             .setThumbnail(profile.avatarUrl || null)
             .addFields(
-                { name: 'Discord',        value: `<@${targetUser.id}>`,             inline: true },
-                { name: 'En el juego',   value: profile.username,                   inline: true },
-                { name: 'País',          value: `${f} ${country?.name ?? 'Desconocido'}`, inline: true },
-                { name: 'Estado',        value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
-                { name: 'Build',         value: data.build ?? 'Sin clasificar',    inline: true },
-                { name: 'Gobierno',      value: isGovernment ? (govRole ?? 'Sí') : 'No', inline: true },
-                { name: 'Actualizado por', value: `<@${interaction.user.id}>`,    inline: true },
+                { name: 'Discord',                     value: `<@${targetUser.id}>`,             inline: true },
+                { name: 'En el juego / In-Game',       value: profile.username,                   inline: true },
+                { name: 'País / Country',               value: `${f} ${country?.name ?? 'Desconocido / Unknown'}`, inline: true },
+                { name: 'Estado / Status',              value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
+                { name: 'Build',                        value: data.build ?? 'Sin clasificar / Unclassified', inline: true },
+                { name: 'Gobierno / Government',        value: isGovernment ? (govRole ?? 'Sí / Yes') : 'No', inline: true },
+                { name: 'Actualizado por / Updated by', value: `<@${interaction.user.id}>`,        inline: true },
             )
             .setTimestamp();
 

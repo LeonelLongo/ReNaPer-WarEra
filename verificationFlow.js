@@ -92,32 +92,32 @@ const STATUS_COLOR = {
 };
 
 const STATUS_LABEL = {
-    citizen:   'Ciudadano',
-    foreigner: 'Extranjero',
-    hostile:   'Hostil',
+    citizen:   'Ciudadano / Citizen',
+    foreigner: 'Extranjero / Foreigner',
+    hostile:   'Hostil / Hostile',
 };
 
 const SUB_STATUS_LABEL = {
     greenCardHolder: 'Proxi',
-    diplomat:        'Diplomático',
-    visitorVisa:     'Turista',
-    deportee:        'Deportado',
-    terrorist:       'Terrorista Designado',
+    diplomat:        'Diplomático / Diplomat',
+    visitorVisa:     'Turista / Tourist',
+    deportee:        'Deportado / Deportee',
+    terrorist:       'Terrorista Designado / Designated Terrorist',
 };
 
 const GOV_POSITION_LABEL = {
-    'President':                   'Presidente',
-    'Vice President':              'Vicepresidente',
-    'Minister of Defense':         'Ministro de Defensa',
-    'Minister of Foreign Affairs': 'Ministro de Relaciones Exteriores',
-    'Minister of Economy':         'Ministro de Economía',
-    'Congress Member':             'Miembro del Congreso',
+    'President':                   'Presidente / President',
+    'Vice President':              'Vicepresidente / Vice President',
+    'Minister of Defense':         'Ministro de Defensa / Minister of Defense',
+    'Minister of Foreign Affairs': 'Ministro de Relaciones Exteriores / Minister of Foreign Affairs',
+    'Minister of Economy':         'Ministro de Economía / Minister of Economy',
+    'Congress Member':             'Miembro del Congreso / Congress Member',
 };
 
 const APPLICATION_STATUS_VALUE = {
-    pending:  'Pendiente',
-    approved: 'Aprobado',
-    denied:   'Denegado',
+    pending:  'Pendiente / Pending',
+    approved: 'Aprobado / Approved',
+    denied:   'Denegado / Denied',
 };
 
 function flag(code) {
@@ -132,10 +132,10 @@ function buildCondensedEmbed(data, discordUser) {
     const embed = new EmbedBuilder()
         .setTitle(`${countryFlag} ${profile.username}`)
         .setColor(0x95A5A6)
-        .setDescription('¿Eres vos?')
+        .setDescription('¿Eres vos? / Is this you?')
         .addFields(
-            { name: 'Nivel',   value: String(profile.leveling?.level ?? '?'), inline: true },
-            { name: 'País', value: `${countryFlag} ${country?.name ?? 'Desconocido'}`, inline: true },
+            { name: 'Nivel / Level', value: String(profile.leveling?.level ?? '?'), inline: true },
+            { name: 'País / Country', value: `${countryFlag} ${country?.name ?? 'Desconocido / Unknown'}`, inline: true },
         )
         .setTimestamp();
 
@@ -149,39 +149,39 @@ function buildApplicationEmbed(data, discordUser, applicationStatus = 'pending')
 
     const govLabel = govPosition ? (GOV_POSITION_LABEL[govPosition] ?? govPosition) : null;
     const countryValue = govLabel
-        ? `${countryFlag} ${country?.name ?? 'Unknown'}\n${govLabel}`
-        : `${countryFlag} ${country?.name ?? 'Unknown'}`;
+        ? `${countryFlag} ${country?.name ?? 'Desconocido / Unknown'}\n${govLabel}`
+        : `${countryFlag} ${country?.name ?? 'Desconocido / Unknown'}`;
 
     const statusValue = subStatus
         ? `${STATUS_LABEL[immigrationStatus]}\n${SUB_STATUS_LABEL[subStatus] ?? subStatus}`
         : STATUS_LABEL[immigrationStatus];
 
-    const MU_ROLE_LABEL = { manager: 'Gerente', commander: 'Comandante' };
+    const MU_ROLE_LABEL = { manager: 'Gerente / Manager', commander: 'Comandante / Commander' };
     const muRoleLine = data.muRole && MU_ROLE_LABEL[data.muRole] ? `\n${MU_ROLE_LABEL[data.muRole]}` : '';
     const muValue = muName && profile.mu
         ? `[${muName}](https://app.warera.io/mu/${profile.mu})${muRoleLine}`
-        : 'Ninguna';
+        : 'Ninguna / None';
 
-    const BUILD_LABEL = { war: 'Soldado', econ: 'Economista' };
-    const buildValue = BUILD_LABEL[build] ?? 'Sin clasificar';
+    const BUILD_LABEL = { war: 'Soldado / Warrior', econ: 'Economista / Economist' };
+    const buildValue = BUILD_LABEL[build] ?? 'Sin clasificar / Unclassified';
 
     const embed = new EmbedBuilder()
         .setTitle(`${countryFlag} ${profile.username}`)
         .setURL(`https://app.warera.io/user/${profile._id}`)
         .setColor(STATUS_COLOR[immigrationStatus] ?? 0x95A5A6)
-        .setAuthor({ name: 'Solicitud de Ingreso' })
+        .setAuthor({ name: 'Solicitud de Ingreso / Immigration Application' })
         .setTimestamp();
 
     if (profile.avatarUrl) embed.setThumbnail(profile.avatarUrl);
 
     embed.addFields(
-        { name: 'Discord',   value: `<@${discordUser.id}>`,                                   inline: true },
-        { name: 'Nivel',     value: String(profile.leveling?.level ?? '?'),                 inline: true },
-        { name: 'País',      value: countryValue,                                            inline: true },
-        { name: 'MU',        value: muValue,                                                 inline: true },
-        { name: 'Build',     value: buildValue,                                              inline: true },
-        { name: 'Sugerido',  value: statusValue,                                             inline: true },
-        { name: 'Estado',    value: APPLICATION_STATUS_VALUE[applicationStatus] ?? 'Pendiente', inline: true },
+        { name: 'Discord',           value: `<@${discordUser.id}>`,                                        inline: true },
+        { name: 'Nivel / Level',     value: String(profile.leveling?.level ?? '?'),                      inline: true },
+        { name: 'País / Country',    value: countryValue,                                                  inline: true },
+        { name: 'MU',                value: muValue,                                                       inline: true },
+        { name: 'Build',             value: buildValue,                                                    inline: true },
+        { name: 'Sugerido / Suggested', value: statusValue,                                                inline: true },
+        { name: 'Estado / Status',   value: APPLICATION_STATUS_VALUE[applicationStatus] ?? 'Pendiente / Pending', inline: true },
     );
 
     return embed;
@@ -190,9 +190,9 @@ function buildApplicationEmbed(data, discordUser, applicationStatus = 'pending')
 function updateEmbedApplicationStatus(embed, status) {
     const updated = EmbedBuilder.from(embed);
     const fields  = [...(updated.data.fields ?? [])];
-    const idx     = fields.findIndex(f => f.name === 'Application Status');
+    const idx     = fields.findIndex(f => f.name === 'Estado / Status');
     if (idx >= 0) {
-        fields[idx] = { name: 'Application Status', value: APPLICATION_STATUS_VALUE[status] ?? status, inline: true };
+        fields[idx] = { name: 'Estado / Status', value: APPLICATION_STATUS_VALUE[status] ?? status, inline: true };
         updated.setFields(fields);
     }
     return updated;
@@ -203,10 +203,10 @@ function updateEmbedApplicationStatus(embed, status) {
 function buildActionButtons(discordId, immigrationStatus) {
     const id = discordId;
 
-    const approveBtn = new ButtonBuilder().setCustomId(`vf:approve:${id}`).setLabel('Aprobar Ciudadano').setStyle(ButtonStyle.Success);
-    const denyBtn    = new ButtonBuilder().setCustomId(`vf:deny:${id}`).setLabel('Denegar').setStyle(ButtonStyle.Danger);
-    const closeBtn   = new ButtonBuilder().setCustomId(`vf:close:${id}`).setLabel('Cerrar Ticket').setStyle(ButtonStyle.Secondary);
-    const otherBtn   = new ButtonBuilder().setCustomId(`vf:other:${id}`).setLabel('Otro').setStyle(ButtonStyle.Secondary);
+    const approveBtn = new ButtonBuilder().setCustomId(`vf:approve:${id}`).setLabel('Aprobar Ciudadano / Approve Citizen').setStyle(ButtonStyle.Success);
+    const denyBtn    = new ButtonBuilder().setCustomId(`vf:deny:${id}`).setLabel('Denegar / Deny').setStyle(ButtonStyle.Danger);
+    const closeBtn   = new ButtonBuilder().setCustomId(`vf:close:${id}`).setLabel('Cerrar Ticket / Close Ticket').setStyle(ButtonStyle.Secondary);
+    const otherBtn   = new ButtonBuilder().setCustomId(`vf:other:${id}`).setLabel('Otro / Other').setStyle(ButtonStyle.Secondary);
 
     if (immigrationStatus === 'citizen') {
         return [new ActionRowBuilder().addComponents(approveBtn, denyBtn, otherBtn, closeBtn)];
@@ -215,8 +215,8 @@ function buildActionButtons(discordId, immigrationStatus) {
     if (immigrationStatus === 'foreigner') {
         return [
             new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomático').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Turista').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`vf:diplomat:${id}`).setLabel('Diplomático / Diplomat').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId(`vf:visitorvisa:${id}`).setLabel('Turista / Tourist').setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder().setCustomId(`vf:greencardholder:${id}`).setLabel('Proxi').setStyle(ButtonStyle.Secondary),
                 denyBtn,
                 otherBtn,
@@ -284,16 +284,16 @@ async function openTicket(guild, discordUser, lookupData) {
     const confirmRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`vf:confirm:${discordUser.id}`)
-            .setLabel('Sí, soy yo')
+            .setLabel('Sí, soy yo / Yes, that\'s me')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId(`vf:tryagain:${discordUser.id}`)
-            .setLabel('Intentar de nuevo')
+            .setLabel('Intentar de nuevo / Try Again')
             .setStyle(ButtonStyle.Danger),
     );
 
     await channel.send({
-        content:    `<@${discordUser.id}> — ¿Esta es tu cuenta en el juego?`,
+        content:    `<@${discordUser.id}> — ¿Esta es tu cuenta en el juego?\n――――――――――――――――――――\n<@${discordUser.id}> — Is this your in-game account?`,
         embeds:     [condensed],
         components: [confirmRow],
     });

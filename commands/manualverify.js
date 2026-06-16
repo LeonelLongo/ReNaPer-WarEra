@@ -7,6 +7,8 @@ const roleLogger          = require('../roleLogger');
 const immigrationResolver = require('../immigrationResolver');
 const logger              = require('../logger');
 
+const SEP = '\n――――――――――――――――――――\n';
+
 function canUse(member) {
     if (config.adminUsers?.includes(member.user.id)) return true;
     return !!config.roles.governmentOfficial && member.roles.cache.has(config.roles.governmentOfficial);
@@ -15,26 +17,26 @@ function canUse(member) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('manualverify')
-        .setDescription('Manually verify a user, bypassing the ticket system (admin only)')
+        .setDescription('Verificar manualmente (admin) / Manually verify (admin)')
         .addUserOption(opt =>
-            opt.setName('user').setDescription('Discord user to verify').setRequired(true))
+            opt.setName('user').setDescription('Usuario a verificar / User to verify').setRequired(true))
         .addStringOption(opt =>
-            opt.setName('profile').setDescription('In-game username, ID, or profile URL').setRequired(true))
+            opt.setName('profile').setDescription('Usuario, ID o URL / Username, ID, or URL').setRequired(true))
         .addStringOption(opt =>
             opt.setName('status')
-                .setDescription('Override immigration status (default: auto-detect)')
+                .setDescription('Estado a asignar / Status to assign')
                 .setRequired(false)
                 .addChoices(
-                    { name: 'Citizen',          value: 'citizen' },
-                    { name: 'Green Card Holder', value: 'greenCardHolder' },
-                    { name: 'Diplomat',          value: 'diplomat' },
-                    { name: 'Visitor Visa',      value: 'visitorVisa' },
-                    { name: 'Deportee',          value: 'deportee' },
+                    { name: 'Ciudadano / Citizen',          value: 'citizen' },
+                    { name: 'Proxi / Green Card Holder',    value: 'greenCardHolder' },
+                    { name: 'Diplomático / Diplomat',       value: 'diplomat' },
+                    { name: 'Turista / Visitor Visa',       value: 'visitorVisa' },
+                    { name: 'Deportado / Deportee',         value: 'deportee' },
                 )),
 
     async execute(interaction) {
         if (!canUse(interaction.member)) {
-            return interaction.reply({ content: 'No tenés permisos para usar este comando.', flags: 64 });
+            return interaction.reply({ content: `No tenés permisos para usar este comando.${SEP}You do not have permission to use this command.`, flags: 64 });
         }
 
         await interaction.deferReply({ flags: 64 });
@@ -45,16 +47,16 @@ module.exports = {
 
         if (await verificationStore.isVerified(targetUser.id)) {
             const existing = await verificationStore.get(targetUser.id);
-            return interaction.editReply(`<@${targetUser.id}> ya está verificado como **${existing.gameUsername}**. Usá /unverify primero.`);
+            return interaction.editReply(`<@${targetUser.id}> ya está verificado como **${existing.gameUsername}**. Usá /unverify primero.${SEP}<@${targetUser.id}> is already verified as **${existing.gameUsername}**. Use /unverify first.`);
         }
 
         const data = await verificationFlow.lookupProfile(profileInput);
-        if (!data) return interaction.editReply('No se encontró ese perfil del juego.');
+        if (!data) return interaction.editReply(`No se encontró ese perfil del juego.${SEP}Could not find that game profile.`);
 
         const { profile, country, countryId } = data;
 
         const dupe = await verificationStore.findByGameId(profile._id);
-        if (dupe) return interaction.editReply(`Esa cuenta del juego ya está vinculada a <@${dupe[0]}>.`);
+        if (dupe) return interaction.editReply(`Esa cuenta del juego ya está vinculada a <@${dupe[0]}>.${SEP}This game account is already linked to <@${dupe[0]}>.`);
 
         let { immigrationStatus, subStatus } = data;
         if (statusOverride) {
@@ -97,22 +99,22 @@ module.exports = {
             await member.setNickname(profile.username, 'Manual verification').catch(() => {});
         } catch (err) {
             logger.error('MANUALVERIFY', `Role sync failed for ${targetUser.id}: ${err.message}`);
-            return interaction.editReply(`Verificado y guardado, pero la asignación de roles falló: ${err.message}`);
+            return interaction.editReply(`Verificado y guardado, pero la asignación de roles falló: ${err.message}${SEP}Verified and saved, but role assignment failed: ${err.message}`);
         }
 
         const f = verificationFlow.flag(country?.code);
 
         const embed = new EmbedBuilder()
-            .setTitle('Verificación Manual Completada')
+            .setTitle('Verificación Manual Completada / Manual Verification Complete')
             .setColor(0x2ECC71)
             .setThumbnail(profile.avatarUrl || null)
             .addFields(
-                { name: 'Discord',      value: `<@${targetUser.id}>`,       inline: true },
-                { name: 'En el juego', value: profile.username,             inline: true },
-                { name: 'País',        value: `${f} ${country?.name ?? 'Desconocido'}`, inline: true },
-                { name: 'Estado',      value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
-                { name: 'Build',       value: data.build ?? 'Sin clasificar', inline: true },
-                { name: 'Aprobado por', value: `<@${interaction.user.id}>`, inline: true },
+                { name: 'Discord',                  value: `<@${targetUser.id}>`,       inline: true },
+                { name: 'En el juego / In-Game',     value: profile.username,             inline: true },
+                { name: 'País / Country',            value: `${f} ${country?.name ?? 'Desconocido / Unknown'}`, inline: true },
+                { name: 'Estado / Status',           value: `${immigrationStatus}${subStatus ? ` / ${subStatus}` : ''}`, inline: true },
+                { name: 'Build',                     value: data.build ?? 'Sin clasificar / Unclassified', inline: true },
+                { name: 'Aprobado por / Approved by', value: `<@${interaction.user.id}>`, inline: true },
             )
             .setTimestamp();
 

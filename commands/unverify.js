@@ -4,6 +4,8 @@ const verificationStore = require('../verificationStore');
 const roleSync          = require('../roleSync');
 const logger            = require('../logger');
 
+const SEP = '\n――――――――――――――――――――\n';
+
 function canUse(member) {
     if (config.adminUsers?.includes(member.user.id)) return true;
     return [config.roles.president, config.roles.secretaryOfState, config.roles.governmentOfficial]
@@ -14,24 +16,24 @@ function canUse(member) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('unverify')
-        .setDescription('Remove a user\'s verification and strip their roles (admin only)')
+        .setDescription('Quitar verificación y roles (admin) / Remove verification & roles (admin)')
         .addUserOption(opt =>
-            opt.setName('user').setDescription('Discord user to unverify').setRequired(true))
+            opt.setName('user').setDescription('Usuario a desverificar / User to unverify').setRequired(true))
         .addStringOption(opt =>
-            opt.setName('reason').setDescription('Reason for removal').setRequired(false)),
+            opt.setName('reason').setDescription('Razón / Reason').setRequired(false)),
 
     async execute(interaction) {
         if (!canUse(interaction.member)) {
-            return interaction.reply({ content: 'No tenés permisos para usar este comando.', flags: 64 });
+            return interaction.reply({ content: `No tenés permisos para usar este comando.${SEP}You do not have permission to use this command.`, flags: 64 });
         }
 
         await interaction.deferReply({ flags: 64 });
 
         const targetUser = interaction.options.getUser('user');
-        const reason     = interaction.options.getString('reason') ?? 'No reason provided';
+        const reason     = interaction.options.getString('reason') ?? 'No se indicó razón / No reason provided';
 
         if (!await verificationStore.isVerified(targetUser.id)) {
-            return interaction.editReply(`<@${targetUser.id}> no está verificado.`);
+            return interaction.editReply(`<@${targetUser.id}> no está verificado.${SEP}<@${targetUser.id}> is not verified.`);
         }
 
         const record = await verificationStore.get(targetUser.id);
@@ -49,14 +51,14 @@ module.exports = {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle('Verificación Eliminada')
+            .setTitle('Verificación Eliminada / Verification Removed')
             .setColor(0xED4245)
             .addFields(
-                { name: 'Discord',        value: `<@${targetUser.id}>`,       inline: true },
-                { name: 'Era',            value: record.gameUsername,          inline: true },
-                { name: 'Estado',         value: record.immigrationStatus,     inline: true },
-                { name: 'Eliminado por',  value: `<@${interaction.user.id}>`, inline: true },
-                { name: 'Razón',          value: reason,                       inline: false },
+                { name: 'Discord',                    value: `<@${targetUser.id}>`,       inline: true },
+                { name: 'Era / Was',                   value: record.gameUsername,          inline: true },
+                { name: 'Estado / Status',             value: record.immigrationStatus,     inline: true },
+                { name: 'Eliminado por / Removed by',  value: `<@${interaction.user.id}>`, inline: true },
+                { name: 'Razón / Reason',              value: reason,                       inline: false },
             )
             .setTimestamp();
 
