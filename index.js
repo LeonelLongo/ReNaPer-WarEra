@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs     = require('fs');
 const path   = require('path');
@@ -177,7 +178,7 @@ client.once(Events.ClientReady, async () => {
     }
 });
 
-client.login(config.token).catch(err => {
+client.login(process.env.DISCORD_TOKEN).catch(err => {
     logger.error('BOOT', `Login failed: ${err.message}`);
     process.exit(1);
 });

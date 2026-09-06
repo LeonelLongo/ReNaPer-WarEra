@@ -1,7 +1,8 @@
+require('dotenv').config();
 const logger = require('./logger');
 
 const BASE_URL = 'https://api2.warera.io/trpc';
-const API_KEY  = 'wae_8e397114bdb0234c319f7133362a3737fe21fe6f73b195ac255b87fabd3c2cce';
+const API_KEY  = process.env.WARERA_API_KEY;
 
 const cache = new Map();
 
