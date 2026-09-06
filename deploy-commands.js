@@ -1,7 +1,7 @@
+require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const config = require('./config.json');
 const logger = require('./logger');
 
 const commands = [];
@@ -16,13 +16,13 @@ for (const file of commandFiles) {
     }
 }
 
-const rest = new REST().setToken(config.token);
+const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
     try {
         logger.info('DEPLOY', `Registering ${commands.length} slash command(s)...`);
         await rest.put(
-            Routes.applicationGuildCommands(config.clientId, config.guildId),
+            Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.DISCORD_GUILD_ID),
             { body: commands }
         );
         logger.info('DEPLOY', 'Slash commands registered successfully.');

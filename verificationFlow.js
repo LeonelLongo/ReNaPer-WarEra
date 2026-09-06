@@ -48,7 +48,7 @@ async function lookupProfile(input) {
     const build = buildClassifier.classify(profile.skills);
     const { immigrationStatus, subStatus } = await immigrationResolver.resolve(
         countryId,
-        govPosition !== null && countryId !== config.countryId
+        govPosition !== null && countryId !== process.env.WARERA_COUNTRY_ID
     );
 
     const isLocalGov = immigrationStatus === 'citizen' && govPosition !== null;

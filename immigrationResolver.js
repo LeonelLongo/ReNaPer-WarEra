@@ -1,4 +1,3 @@
-const config         = require('./config.json');
 const diplomacyStore = require('./diplomacyStore');
 
 const HOSTILE_STATUSES = new Set(['war', 'rival']);
@@ -9,7 +8,7 @@ const HOSTILE_STATUSES = new Set(['war', 'rival']);
  */
 async function resolve(countryId, isInOwnGov = false) {
     // Lithuanian citizen
-    if (countryId === config.countryId) {
+    if (countryId === process.env.WARERA_COUNTRY_ID) {
         return { immigrationStatus: 'citizen', subStatus: null };
     }
 
@@ -36,7 +35,7 @@ async function resolve(countryId, isInOwnGov = false) {
  * Only returns a role if the player is in THIS nation's government.
  */
 function resolveGovRole(position, countryId) {
-    if (countryId !== config.countryId || !position) return null;
+    if (countryId !== process.env.WARERA_COUNTRY_ID || !position) return null;
 
     const map = {
         'President':                   'president',
